@@ -108,6 +108,12 @@ function doneFinishReason(chunk: ApiStreamDoneChunk): AgentModelFinishReason {
 	) {
 		return "max-tokens";
 	}
+	if (
+		chunk.incompleteReason === "content_filter" ||
+		chunk.incompleteReason === "content-filter"
+	) {
+		return "content-filter";
+	}
 	return "stop";
 }
 
