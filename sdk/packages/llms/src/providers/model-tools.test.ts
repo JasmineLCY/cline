@@ -2,6 +2,7 @@ import type { GatewayProviderManifest } from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import {
 	providerManifestSupportsModelTool,
+	providerOffersModelTool,
 	supportsModelTool,
 } from "./model-tools";
 
@@ -79,6 +80,27 @@ describe("supportsModelTool", () => {
 		expect(
 			providerManifestSupportsModelTool(manifest, "alpha", "web_search"),
 		).toBe(true);
+	});
+
+	it("reports provider-level web search availability independent of model routes", () => {
+		// Vertex excludes Claude routes per model, but the provider still
+		// offers web search for its Gemini models.
+		expect(providerOffersModelTool("vertex", "web_search")).toBe(true);
+		for (const providerId of [
+			"cline",
+			"cline-pass",
+			"anthropic",
+			"openai-native",
+			"openai-codex",
+			"gemini",
+		]) {
+			expect(providerOffersModelTool(providerId, "web_search")).toBe(true);
+		}
+		expect(providerOffersModelTool("openrouter", "web_search")).toBe(false);
+		expect(providerOffersModelTool("openai-compatible", "web_search")).toBe(
+			false,
+		);
+		expect(providerOffersModelTool("unknown-custom", "web_search")).toBe(false);
 	});
 
 	it("falls back to the manifest default model when no model id is given", () => {

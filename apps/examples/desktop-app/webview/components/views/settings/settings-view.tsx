@@ -23,6 +23,7 @@ import {
 import { desktopClient } from "@/lib/desktop-client";
 import { resetOnboarding } from "@/lib/onboarding";
 import {
+	fetchProviderCatalog,
 	invalidateProviderCatalogCache,
 	notifyVoiceInputSettingsChanged,
 	publishProviderModels,
@@ -44,6 +45,11 @@ import {
 	setStoredHubTheme,
 } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import {
+	formatProviderNameList,
+	summarizeWebSearchSupport,
+	type WebSearchSupportSummary,
+} from "@/lib/web-search-support";
 import { PageFrame, PageHeader } from "../page-layout";
 import { AccountView } from "./account-view";
 import { AddProviderContent, type AddProviderPayload } from "./add-provider";
@@ -524,7 +530,9 @@ export function SettingsView({
 		) : activeNav === "Account" ? (
 			<AccountView />
 		) : activeNav === "General" ? (
-			<GeneralSettingsContent />
+			<GeneralSettingsContent
+				onOpenModelProviders={() => onNavigateSection("Models")}
+			/>
 		) : (
 			<div className="flex h-full items-center justify-center">
 				<p className="text-sm text-muted-foreground">
@@ -555,7 +563,11 @@ const ACCENT_OPTIONS: { id: HubAccent; label: string; swatch: string }[] = [
 	{ id: "ember", label: "Ember", swatch: "oklch(0.6 0.19 33)" },
 ];
 
-function GeneralSettingsContent() {
+function GeneralSettingsContent({
+	onOpenModelProviders,
+}: {
+	onOpenModelProviders: () => void;
+}) {
 	const [theme, setTheme] = useState<HubTheme>(() => {
 		if (typeof window === "undefined") return "light";
 		return readStoredHubTheme() ?? readSystemHubTheme();
@@ -586,8 +598,30 @@ function GeneralSettingsContent() {
 	const [webSearchLoading, setWebSearchLoading] = useState(true);
 	const [webSearchSaving, setWebSearchSaving] = useState(false);
 	const [webSearchError, setWebSearchError] = useState<string | null>(null);
+	const [webSearchSupport, setWebSearchSupport] =
+		useState<WebSearchSupportSummary | null>(null);
 
 	useEffect(() => subscribeToAppFontSize(setFontSize), []);
+
+	// The toggle only takes effect with providers that offer native web
+	// search, so surface which connected providers (if any) honor it.
+	useEffect(() => {
+		let cancelled = false;
+		void fetchProviderCatalog()
+			.then((payload) => {
+				if (!cancelled) {
+					setWebSearchSupport(
+						summarizeWebSearchSupport(payload.providers ?? []),
+					);
+				}
+			})
+			.catch(() => {
+				// Support status is best-effort; the toggle works without it.
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	const loadGlobalSettings = useCallback(async () => {
 		setTelemetryLoading(true);
@@ -877,9 +911,41 @@ function GeneralSettingsContent() {
 							Web search
 						</p>
 						<p className="text-sm text-muted-foreground">
-							Let the model search the web when the selected provider and model
-							support it. Applies to new sessions.
+							Let the model search the web during a task. Only providers with
+							built-in web search honor this setting; other providers ignore it.
+							Applies to new sessions.
 						</p>
+						{webSearchSupport ? (
+							webSearchSupport.readyProviderNames.length > 0 ? (
+								<p className="text-xs text-muted-foreground">
+									Ready to use with{" "}
+									{formatProviderNameList(webSearchSupport.readyProviderNames)}{" "}
+									— no extra setup needed.
+								</p>
+							) : (
+								<p className="text-xs text-amber-700 dark:text-amber-300">
+									None of your connected providers include built-in web search,
+									so this setting has no effect yet.{" "}
+									<button
+										className="underline underline-offset-2 hover:text-foreground"
+										onClick={onOpenModelProviders}
+										type="button"
+									>
+										Connect a provider
+									</button>{" "}
+									that supports it
+									{webSearchSupport.supportedProviderNames.length > 0 ? (
+										<>
+											, such as{" "}
+											{formatProviderNameList(
+												webSearchSupport.supportedProviderNames.slice(0, 4),
+											)}
+										</>
+									) : null}
+									.
+								</p>
+							)
+						) : null}
 						{webSearchError ? (
 							<p className="mt-2 text-xs text-destructive" role="alert">
 								Failed to update web search setting: {webSearchError}

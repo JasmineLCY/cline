@@ -1625,6 +1625,26 @@ describe("listLocalProviders", () => {
 		});
 	});
 
+	it("flags providers with native web search support", async () => {
+		await addLocalProvider(manager, {
+			providerId: "no-web-search-provider",
+			name: "No Web Search",
+			baseUrl: "https://example.invalid/v1",
+			models: ["m1"],
+		});
+
+		const { providers } = await listLocalProviders(manager, {
+			isClinePassEnabled: true,
+		});
+		const byId = new Map(providers.map((p) => [p.id, p]));
+
+		for (const id of ["cline", "cline-pass", "anthropic", "openai-native"]) {
+			expect(byId.get(id)?.supportsWebSearch).toBe(true);
+		}
+		expect(byId.get("openrouter")?.supportsWebSearch).toBe(false);
+		expect(byId.get("no-web-search-provider")?.supportsWebSearch).toBe(false);
+	});
+
 	it("exposes model count", async () => {
 		await addLocalProvider(manager, {
 			providerId: "count-provider",

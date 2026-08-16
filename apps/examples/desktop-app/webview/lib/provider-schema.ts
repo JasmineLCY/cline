@@ -65,6 +65,8 @@ export interface Provider {
 	configFields?: ProviderConfigField[];
 	configValues?: Record<string, ProviderConfigFieldPrimitive>;
 	modelList?: ProviderModel[];
+	/** Provider offers native web search for at least some of its models. */
+	supportsWebSearch?: boolean;
 }
 
 export interface ProviderSettingsUpdate {

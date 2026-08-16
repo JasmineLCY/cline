@@ -773,6 +773,10 @@ export async function listLocalProviders(
 							info,
 						),
 						modelList,
+						supportsWebSearch: LlmsModels.providerOffersModelTool(
+							id,
+							"web_search",
+						),
 					},
 					rank: getPopularRank(info?.metadata),
 				};

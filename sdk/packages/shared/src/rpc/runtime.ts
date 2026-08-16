@@ -203,6 +203,8 @@ export interface ProviderListItem {
 	configValues?: Record<string, ProviderConfigFieldPrimitive>;
 	modelList?: ProviderModel[];
 	family?: string;
+	/** Provider offers native web search for at least some of its models. */
+	supportsWebSearch?: boolean;
 }
 
 export interface VoiceInputSelection {
