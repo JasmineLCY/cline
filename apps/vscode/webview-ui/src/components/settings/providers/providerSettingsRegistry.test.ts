@@ -35,6 +35,10 @@ describe("providerSettingsRegistry", () => {
 			),
 		).toEqual({
 			allowsCustomIds: false,
+			baseUrlField: {
+				label: "Use custom base URL",
+				placeholder: "Default: https://generativelanguage.googleapis.com",
+			},
 			providerId: "gemini",
 			providerName: "Google Gemini",
 			signupUrl: "https://aistudio.google.com/apikey",
@@ -176,6 +180,16 @@ describe("providerSettingsRegistry", () => {
 			providerId: "together",
 			providerName: "Together",
 			signupUrl: "https://api.together.ai/settings/api-keys",
+		})
+		expect(getFallbackGenericProviderSettings("gemini")).toEqual({
+			allowsCustomIds: false,
+			baseUrlField: {
+				label: "Use custom base URL",
+				placeholder: "Default: https://generativelanguage.googleapis.com",
+			},
+			providerId: "gemini",
+			providerName: "Gemini",
+			signupUrl: "https://aistudio.google.com/apikey",
 		})
 		expect(getFallbackGenericProviderSettings("zai-coding-plan")).toEqual({
 			allowsCustomIds: false,
